@@ -37,15 +37,19 @@
   (get-by-username [{:keys [db]} username]
     (datomic->token-ready (dtm/entity db [:user/username username])))
   (update-password-by-username [{:keys [conn]} username password]
-    )
-  (delete-by-username [this username]
-    )
+    (let [tx-data [{:db/id         [:user/username username]
+                    :user/password (bdyhsh/derive password)}]]
+      @(dtm/transact conn tx-data)))
+  (delete-by-username [{:keys [conn]} username]
+    @(dtm/transact conn [[:db.fn/retractEntity [:user/username username]]]))
   (create-and-return [{:keys [conn]} {:keys [username password]}]
-    (let [eid                        (dtm/tempid :db.part/user)
-          tx-data                    [{:db/id         eid
-                                       :user/username username
-                                       :user/password password}]
-          {:keys [db-after tempids]} @(dtm/transact conn tx-data)]
+    (let [eid     (dtm/tempid :db.part/user)
+          tx-data [{:db/id         eid
+                    :user/username username
+                    :user/password (bdyhsh/derive password)}]
+
+          {:keys [db-after tempids]}
+          @(dtm/transact conn tx-data)]
       (datomic->token-ready
        (dtm/entity db-after (dtm/resolve-tempid db-after tempids eid)))))
   (authenticate [{:keys [db]} {:keys [username password]}]
