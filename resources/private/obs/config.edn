@@ -1,0 +1,7 @@
+{:web-server        #profile {:dev {:port 8080}}
+ :datomic-blueprint #profile {:dev {:uri "datomic:mem://obs-dev"}}
+ :datastore         #profile {:dev {:kind :datomic}}
+ :signer            #profile {:dev {:kind   :sha
+                                    :size   521
+                                    :secret "abcde"}}
+ :ring-middleware   #profile {:dev {:allowed-origins ["^*"]}}}
