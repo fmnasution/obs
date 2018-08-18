@@ -1,5 +1,5 @@
 (set-env!
- :source-paths #{"src/"}
+ :source-paths #{"src/" "test/"}
  :resource-paths #{"resources/"}
  :dependencies '[;; ---- clj ----
                  [org.clojure/clojure "1.10.0-alpha5"]
@@ -21,10 +21,13 @@
                  [bidi "2.1.3"]
                  [mur "0.1.3-SNAPSHOT"]
                  [bouncer "1.0.1"]
-                 [com.taoensso/encore "2.97.0"]])
+                 [com.taoensso/encore "2.97.0"]
+                 ;; ---- dev ----
+                 [metosin/bat-test "0.4.0" :scope "test"]])
 
 (require
  '[mur.boot :refer [system]]
+ '[metosin.bat-test :refer [bat-test]]
  '[obs.system :refer [dev-system-map]])
 
 (deftask dev-repl
@@ -35,4 +38,5 @@
    (system :system 'obs.system/dev-system-map
            :files  ["system.clj"
                     "endpoints.clj"
-                    "config.edn"])))
+                    "config.edn"])
+   (bat-test)))
