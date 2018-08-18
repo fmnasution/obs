@@ -137,8 +137,9 @@
                    :delete (fn [_]
                              (check-authenticated))}))
   :allowed? (fn [{:keys [self]}]
-              (or (equal-username? route-params self)
-                  (equal-username? route-params reset-claims)))
+              (equal-username? route-params (if (some? reset-claims)
+                                              reset-claims
+                                              self)))
   :handle-forbidden (constantly (lrep/ring-response (resp/conflict)))
   :new? false
   :put! (fn [_]
