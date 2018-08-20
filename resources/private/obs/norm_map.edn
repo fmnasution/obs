@@ -1,0 +1,34 @@
+{:obs.main/v1
+ {:txes [[{:db/id                 #db/id[:db.part/db]
+           :db/ident              :db.entity/id
+           :db/valueType          :db.type/string
+           :db/cardinality        :db.cardinality/one
+           :db/unique             :db.unique/identity
+           :db/index              true
+           :db/isComponent        false
+           :db/noHistory          false
+           :db/fulltext           false
+           :db/doc                "Unique identity for every entity"
+           :db.install/_attribute :db.part/db}]]}
+ :obs.user/v1
+ {:txes [[{:db/id                 #db/id[:db.part/db]
+           :db/ident              :user/username
+           :db/valueType          :db.type/string
+           :db/cardinality        :db.cardinality/one
+           :db/unique             :db.unique/value
+           :db/index              true
+           :db/isComponent        false
+           :db/noHistory          false
+           :db/fulltext           false
+           :db/doc                "Username for a user"
+           :db.install/_attribute :db.part/db}
+          {:db/id                 #db/id[:db.part/db]
+           :db/ident              :user/password
+           :db/valueType          :db.type/string
+           :db/cardinality        :db.cardinality/one
+           :db/index              true
+           :db/isComponent        false
+           :db/noHistory          false
+           :db/fulltext           false
+           :db/doc                "Password for a user"
+           :db.install/_attribute :db.part/db}]]}}

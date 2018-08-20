@@ -2,7 +2,6 @@
   (:require
    [clojure.string :as str]
    [buddy.hashers :as bdyhsh]
-   [taoensso.encore :as u]
    [obs.user.api :as usrapi]))
 
 ;; ================================================================
@@ -46,14 +45,4 @@
 
 (defn supported-content-type?
   [{:keys [request] :as ctx} content-types]
-  (u/cond
-    (not (#{:put :post :patch} (:request-method request)))
-    true
-
-    :let [current-content-type (content-type ctx)]
-
-    (nil? current-content-type)
-    true
-
-    :else (some #{current-content-type} content-types)))
-
+  (boolean (some #{(content-type ctx)} content-types)))

@@ -23,6 +23,7 @@
                  [bouncer "1.0.1"]
                  [com.taoensso/encore "2.97.0"]
                  ;; ---- dev ----
+                 [io.rkn/conformity "0.5.1" :scope "test"]
                  [metosin/bat-test "0.4.0" :scope "test"]])
 
 (require

@@ -12,7 +12,7 @@
 ;; ring middleware
 ;; ================================================================
 
-(defn wrap-trailing-slash
+(defn -wrap-trailing-slash
   [handler]
   (fn [{:keys [uri] :as request}]
     (handler (assoc request :uri (if (and (not= "/" uri)
@@ -20,7 +20,7 @@
                                    (subs uri 0 (dec (count uri)))
                                    uri)))))
 
-(defn wrap-exception
+(defn -wrap-exception
   ([handler ex-handler]
    (fn [request]
      (u/catching
@@ -30,9 +30,9 @@
         (ex-handler error request)
         (resp/internal-server-error)))))
   ([handler]
-   (wrap-exception handler nil)))
+   (-wrap-exception handler nil)))
 
-(defn wrap-cors
+(defn -wrap-cors
   [handler config]
   (let [patterns (into [] (map re-pattern) (:allowed-origins config))]
     (mdwcrs/wrap-cors handler
@@ -41,8 +41,8 @@
 
 (defn make-ring-middleware
   [config]
-  (cptmdw/make-middleware [wrap-trailing-slash
-                           wrap-exception
+  (cptmdw/make-middleware [-wrap-trailing-slash
+                           -wrap-exception
                            [mdwdef/wrap-defaults mdwdef/api-defaults]
                            mdwmtj/wrap-format-request
-                           [wrap-cors config]]))
+                           [-wrap-cors config]]))

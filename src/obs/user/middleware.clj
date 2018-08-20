@@ -35,14 +35,19 @@
 
 (defn- http-basic-token->credentials
   [token]
-  (when-let [[username password] (some-> token
-                                         (bdycdc64/decode)
-                                         (bdycdc/bytes->str)
-                                         (str/split #":" 2))]
-    {:username username
-     :password password}))
+  (when-let [[username password] (u/catching
+                                  (some-> token
+                                          (bdycdc64/decode)
+                                          (bdycdc/bytes->str)
+                                          (str/split #":" 2))
+                                  _
+                                  ["" ""])]
+    (if (and (some? username) (some? password))
+      {:username username
+       :password password}
+      {})))
 
-(defn wrap-user-credentials
+(defn -wrap-user-credentials
   [handler]
   (fn [request]
     (u/if-let [auth-token  (parse-authorization request "Basic")
@@ -50,19 +55,19 @@
       (handler (assoc request :user-credentials credentials))
       (handler request))))
 
-(defn wrap-forget-password-claims
+(defn -wrap-forget-password-claims
   [handler {:keys [signer]}]
   (fn [request]
-    (u/if-let [token  (parse-authorization request "ObsForgetToken")
-               claims (usrsgn/unsign signer token)]
+    (u/if-let [token  (parse-authorization request "ObsForget")
+               claims (u/catching (usrsgn/unsign signer token) _ {})]
       (handler (assoc request :forget-claims claims))
       (handler request))))
 
-(defn wrap-reset-password-claims
+(defn -wrap-reset-password-claims
   [handler {:keys [signer]}]
   (fn [request]
-    (u/if-let [token  (parse-authorization request "ObsResetToken")
-               claims (usrsgn/unsign signer token)]
+    (u/if-let [token  (parse-authorization request "ObsReset")
+               claims (u/catching (usrsgn/unsign signer token) _ {})]
       (handler (assoc request :reset-claims claims))
       (handler request))))
 
@@ -72,6 +77,6 @@
 
 (defn make-ring-middleware
   []
-  (cptmdw/make-middleware [wrap-user-credentials
-                           [wrap-forget-password-claims :component]
-                           [wrap-reset-password-claims :component]]))
+  (cptmdw/make-middleware [-wrap-user-credentials
+                           [-wrap-forget-password-claims :component]
+                           [-wrap-reset-password-claims :component]]))

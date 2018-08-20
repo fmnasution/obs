@@ -141,6 +141,7 @@
                                               reset-claims
                                               self)))
   :handle-forbidden (constantly (lrep/ring-response (resp/conflict)))
+  :known-content-type? #(edpdcs/supported-content-type? % supported-media-types)
   :new? false
   :put! (fn [_]
           {::result (update-password-by-username datastore

@@ -7,22 +7,18 @@
 ;; ring middleware
 ;; ================================================================
 
-(defn- inject-closure
-  [handler component]
-  (fn [{:keys [body-params
-              route-params
-              user-credentials
-              forget-claims
-              reset-claims]
-       :as   request}]
-    (let [context (u/merge component
-                           {:body-params      body-params
-                            :route-params     route-params
-                            :user-credentials user-credentials
-                            :forget-claims    forget-claims
-                            :reset-claims     reset-claims})]
+(defn -inject-context
+  [handler component ks]
+  (fn [request]
+    (let [context (u/merge component (select-keys request ks))]
       ((handler request) context))))
 
 (defn make-ring-middleware
   []
-  (cptmdw/make-middleware [[inject-closure :component]]))
+  (cptmdw/make-middleware [[-inject-context
+                            :component
+                            [:body-params
+                             :route-params
+                             :user-credentials
+                             :forget-claims
+                             :reset-claims]]]))
