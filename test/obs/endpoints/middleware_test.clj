@@ -9,6 +9,7 @@
                                             (fn [context]
                                               {:request request
                                                :context context}))
+                                          {:quux :bazbar}
                                           {:a :b}
                                           [:foobar :barfoo])]
       (is (= {:request {:request-method :get
@@ -17,7 +18,8 @@
                         :barfoo         :bazquux}
               :context {:a      :b
                         :foobar :bazbar
-                        :barfoo :bazquux}}
+                        :barfoo :bazquux
+                        :config {:quux :bazbar}}}
              (handler {:request-method :get
                        :uri            "/"
                        :foobar         :bazbar

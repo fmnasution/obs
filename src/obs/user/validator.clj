@@ -51,9 +51,7 @@
 
 (defn forget-claims-schema
   []
-  {:id       [bncv/required
-              bncv/string]
-   :username [bncv/required
+  {:username [bncv/required
               bncv/string]})
 
 (defn make-forget-claims-validator
@@ -74,3 +72,16 @@
 (defn make-reset-claims-validator
   []
   (vldtvldt/make-validator (reset-claims-schema)))
+
+;; ================================================================
+;; update password validator
+;; ================================================================
+
+(defn update-password-schema
+  []
+  {:password [bncv/required
+              bncv/string]})
+
+(defn make-update-password-validator
+  []
+  (vldtvldt/make-validator (update-password-schema)))

@@ -8,127 +8,92 @@
 (defn- sha-signer-system
   [m]
   (c/system-map
-   :signer (usrsgn/make-sha-signer (:signer m))))
+   :signer (usrsgn/make-sha-signer m)))
 
-(let [system (sha-signer-system
-              {:signer {:size      512
-                        :secret    "abcdefghijklmnopqrstuvwxyz"
-                        :auth-exp  1
-                        :reset-exp 1}})]
-  (deftest sha-signer
-    (testing "able to sign and unsign a claims"
-      (let [started  (c/start system)
-            signed   (usrsgn/sign (:signer started)
-                                  {:foo     "bar"
-                                   :baz     {:bar :quux
-                                             :hmm [1 2 3]
-                                             :hii #{:a :b :c}}
-                                   "foobar" "barquux"})
-            unsigned (usrsgn/unsign (:signer started) signed)]
-        (is (not= {:foo     "bar"
-                   :baz     {:bar :quux
-                             :hmm [1 2 3]
-                             :hii #{:a :b :c}}
-                   "foobar" "barquux"}
-                  signed))
-        (is (= {:foo    "bar"
-                :baz    {:bar "quux"
-                         :hmm [1 2 3]
-                         :hii ["a" "b" "c"]}
-                :foobar "barquux"}
-               (update-in unsigned [:baz :hii] sort)))
-        (c/stop started)))
-    (testing "able to create auth token"
-      (let [started  (c/start system)
-            signed   (usrsgn/auth-token (:signer started)
-                                        {:id       1
-                                         :username "foobar"})
-            unsigned (usrsgn/unsign (:signer started) signed)]
-        (is (string? signed))
-        (are [k] (contains? unsigned k)
-          :id
-          :username
-          :iat
-          :exp)
-        (c/stop started)))
-    (testing "able to create reset token"
-      (let [started (c/start system)
-            signed   (usrsgn/reset-token (:signer started)
-                                         {:id       1
-                                          :username "foobar"})
-            unsigned (usrsgn/unsign (:signer started) signed)]
-        (is (string? signed))
-        (are [k] (contains? unsigned k)
-          :id
-          :username
-          :iat
-          :exp
-          :sub)
-        (is (= "reset" (:sub unsigned)))
-        (c/stop started)))))
+(deftest sha-signer
+  (testing "able to sign and unsign claims"
+    (let [system (sha-signer-system
+                  {:size      512
+                   :secret    "my secret that no one knows"
+                   :auth-exp  1
+                   :reset-exp 1})
+          {:keys [signer] :as started}
+          (c/start system)]
+      (testing "signing claims"
+        (let [signed (usrsgn/sign signer {:foo "bar"})]
+          (is (string? signed))
+          (testing "unsigning claims"
+            (is (map? (usrsgn/unsign signer signed))))))
+      (testing "signing auth token"
+        (let [signed (usrsgn/auth-token signer {:id 1 :username "foobar"})]
+          (is (string? signed))
+          (testing "unsigning auth token"
+            (let [unsigned (usrsgn/unsign signer signed)]
+              (is (map? unsigned))
+              (are [k] (contains? unsigned k)
+                :id
+                :username
+                :iat
+                :exp)))))
+      (testing "signing reset token"
+        (let [signed (usrsgn/reset-token signer {:id 2 :username "barfoo"})]
+          (is (string? signed))
+          (testing "unsigning reset token"
+            (let [unsigned (usrsgn/unsign signer signed)]
+              (is (map? unsigned))
+              (are [k] (contains? unsigned k)
+                :id
+                :username
+                :iat
+                :exp
+                :sub)
+              (is (= "reset" (:sub unsigned)))))))
+      (c/stop started))))
 
 (defn- asymetric-signer-system
   [m]
   (c/system-map
-   :signer (usrsgn/make-asymetric-signer (:signer m))))
+   :signer (usrsgn/make-asymetric-signer m)))
 
-(let [system (asymetric-signer-system
-              {:signer
-               {:algorithm        :rs256
-                :private-key-path (io/resource
-                                   "private/obs/key/obstestkey.pem")
-                :public-key-path  (io/resource
-                                   "private/obs/key/obstestkey_public.pem")
-                :auth-exp         1
-                :reset-exp        1}})]
-  (deftest asymetric-signer
-    (testing "able to sign and unsign a claims"
-      (let [started  (c/start system)
-            signed   (usrsgn/sign (:signer started)
-                                  {:foo     "bar"
-                                   :baz     {:bar :quux
-                                             :hmm [1 2 3]
-                                             :hii #{:a :b :c}}
-                                   "foobar" "barquux"})
-            unsigned (usrsgn/unsign (:signer started) signed)]
-        (is (not= {:foo     "bar"
-                   :baz     {:bar :quux
-                             :hmm [1 2 3]
-                             :hii #{:a :b :c}}
-                   "foobar" "barquux"}
-                  signed))
-        (is (= {:foo    "bar"
-                :baz    {:bar "quux"
-                         :hmm [1 2 3]
-                         :hii ["a" "b" "c"]}
-                :foobar "barquux"}
-               (update-in unsigned [:baz :hii] sort)))
-        (c/stop started)))
-    (testing "able to create auth token"
-      (let [started  (c/start system)
-            signed   (usrsgn/auth-token (:signer started)
-                                        {:id       2
-                                         :username "barfoo"})
-            unsigned (usrsgn/unsign (:signer started) signed)]
-        (is (string? signed))
-        (are [k] (contains? unsigned k)
-          :id
-          :username
-          :iat
-          :exp)
-        (c/stop started)))
-    (testing "able to create reset token"
-      (let [started  (c/start system)
-            signed   (usrsgn/reset-token (:signer started)
-                                         {:id       2
-                                          :username "barfoo"})
-            unsigned (usrsgn/unsign (:signer started) signed)]
-        (is (string? signed))
-        (are [k] (contains? unsigned k)
-          :id
-          :username
-          :iat
-          :exp
-          :sub)
-        (is (= "reset" (:sub unsigned)))
-        (c/stop started)))))
+(deftest asymetryc-signer
+  (testing "able to sign and unsign claims"
+    (let [system (asymetric-signer-system
+                  {:algorithm        :rs256
+                   :private-key-path (io/resource
+                                      "private/obs/key/obstestkey.pem")
+                   :public-key-path  (io/resource
+                                      "private/obs/key/obstestkey_public.pem")
+                   :auth-exp         1
+                   :reset-exp        1})
+          {:keys [signer] :as started}
+          (c/start system)]
+      (testing "signing claims"
+        (let [signed (usrsgn/sign signer {:foo "bar"})]
+          (is (string? signed))
+          (testing "unsigning claims"
+            (is (map? (usrsgn/unsign signer signed))))))
+      (testing "signing auth token"
+        (let [signed (usrsgn/auth-token signer {:id 1 :username "foobar"})]
+          (is (string? signed))
+          (testing "unsigning auth token"
+            (let [unsigned (usrsgn/unsign signer signed)]
+              (is (map? unsigned))
+              (are [k] (contains? unsigned k)
+                :id
+                :username
+                :iat
+                :exp)))))
+      (testing "signing reset token"
+        (let [signed (usrsgn/reset-token signer {:id 2 :username "barfoo"})]
+          (is (string? signed))
+          (testing "unsigning reset token"
+            (let [unsigned (usrsgn/unsign signer signed)]
+              (is (map? unsigned))
+              (are [k] (contains? unsigned k)
+                :id
+                :username
+                :iat
+                :exp
+                :sub)
+              (is (= "reset" (:sub unsigned)))))))
+      (c/stop started))))

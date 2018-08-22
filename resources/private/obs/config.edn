@@ -3,5 +3,7 @@
  :datastore         #profile {:dev {:kind :datomic}}
  :signer            #profile {:dev {:kind   :sha
                                     :size   521
-                                    :secret "abcde"}}
- :ring-middleware   #profile {:dev {:allowed-origins ["^*"]}}}
+                                    :secret "mysecretword"}}
+ :app               #profile {:dev {:allowed-origins      ["^*"]
+                                    :auth-token-duration  1
+                                    :reset-token-duration 1}}}

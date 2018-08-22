@@ -84,19 +84,27 @@
     :asymetric (make-asymetric-signer config)))
 
 (defn auth-token
-  [signer user]
-  (let [now (t/now)
-        exp (t/plus now (t/hours (:auth-exp signer)))]
-    (-> user
-        (select-keys [:id :username])
-        (assoc :iat now :exp exp)
-        (as-> <> (sign signer <>)))))
+  ([signer user hours-expired]
+   (let [now (t/now)
+         exp (t/plus now (t/hours (if (some? hours-expired)
+                                    hours-expired
+                                    1)))]
+     (-> user
+         (select-keys [:id :username])
+         (assoc :iat now :exp exp)
+         (as-> <> (sign signer <>)))))
+  ([signer user]
+   (auth-token signer user nil)))
 
 (defn reset-token
-  [signer user]
-  (let [now (t/now)
-        exp (t/plus now (t/hours (:reset-exp signer)))]
-    (-> user
-        (select-keys [:id :username])
-        (assoc :sub "reset", :iat now, :exp exp)
-        (as-> <> (sign signer <>)))))
+  ([signer user hours-expired]
+   (let [now (t/now)
+         exp (t/plus now (t/hours (if (some? hours-expired)
+                                    hours-expired
+                                    1)))]
+     (-> user
+         (select-keys [:id :username])
+         (assoc :sub "reset", :iat now, :exp exp)
+         (as-> <> (sign signer <>)))))
+  ([signer user]
+   (reset-token signer user nil)))

@@ -15,12 +15,12 @@
 ;; ================================================================
 
 (defn- present-auth-token
-  [signer user]
-  {:auth-token (usrsgn/auth-token signer user)})
+  [signer user hours-duration]
+  {:auth-token (usrsgn/auth-token signer user hours-duration)})
 
 (defn- present-reset-token
-  [signer user]
-  {:reset-token (usrsgn/reset-token signer user)})
+  [signer user hours-duration]
+  {:reset-token (usrsgn/reset-token signer user hours-duration)})
 
 (defn- get-by-username
   [datastore {:keys [username]}]
@@ -46,7 +46,8 @@
   ["application/json" "application/transit+json"])
 
 (defresource create-user-endpoint
-  [{:keys [datastore
+  [{:keys [config
+           datastore
            signer
            create-user-validator
            body-params]}]
@@ -60,8 +61,9 @@
                (some? (get-by-username datastore body-params)))
   :post! (fn [_]
            {::result (usrapi/create-and-return datastore body-params)})
-  :new? (comp nil? ::result)
-  :handle-created #(present-auth-token signer (::result %)))
+  :handle-created #(present-auth-token signer
+                                       (::result %)
+                                       (:auth-token-duration config)))
 
 (defn make-create-user-endpoint
   []
@@ -73,7 +75,8 @@
 ;; ================================================================
 
 (defresource reset-token-endpoint
-  [{:keys [datastore
+  [{:keys [config
+           datastore
            signer
            route-params
            forget-claims
@@ -88,7 +91,9 @@
   :respond-with-entity? true
   :handle-ok (fn [_]
                (if-let [user (get-by-username datastore forget-claims)]
-                 (present-reset-token signer user)
+                 (present-reset-token signer
+                                      user
+                                      (:reset-token-duration config))
                  (lrep/ring-response (resp/not-found)))))
 
 (defn make-reset-token-endpoint
@@ -102,9 +107,11 @@
 ;; ================================================================
 
 (defresource target-user-endpoint
-  [{:keys [datastore
+  [{:keys [config
+           datastore
            signer
            body-params
+           update-password-validator
            route-params
            user-credentials
            user-credentials-validator
@@ -118,11 +125,14 @@
                 (l/by-method
                  {:post   (fn [_]
                             (invalid-user-credentials?))
-                  :put    (fn [_]
-                            (if (some? reset-claims)
-                              (vldtvldt/invalid? reset-claims-validator
-                                                 reset-claims)
-                              (invalid-user-credentials?)))
+                  :put    (fn [ctx]
+                            (or (edpdcs/no-content-type? ctx)
+                                (vldtvldt/invalid? update-password-validator
+                                                   body-params)
+                                (if (some? reset-claims)
+                                  (vldtvldt/invalid? reset-claims-validator
+                                                     reset-claims)
+                                  (invalid-user-credentials?))))
                   :delete (fn [_]
                             (invalid-user-credentials?))}))
   :authorized? (let [check-authenticated
@@ -136,12 +146,17 @@
                                (check-authenticated)))
                    :delete (fn [_]
                              (check-authenticated))}))
-  :allowed? (fn [{:keys [self]}]
+  :allowed? (fn [_]
               (equal-username? route-params (if (some? reset-claims)
                                               reset-claims
-                                              self)))
+                                              user-credentials)))
   :handle-forbidden (constantly (lrep/ring-response (resp/conflict)))
-  :known-content-type? #(edpdcs/supported-content-type? % supported-media-types)
+  :known-content-type? (l/by-method
+                        {:post   true
+                         :put    #(edpdcs/supported-content-type?
+                                   %
+                                   supported-media-types)
+                         :delete true})
   :new? false
   :put! (fn [_]
           {::result (update-password-by-username datastore
@@ -149,11 +164,13 @@
                                                  body-params)})
   :delete! (fn [_]
              {::result (delete-by-username datastore route-params)})
-  :respond-with-entity? (l/by-method {:post  false
+  :respond-with-entity? (l/by-method {:post  true
                                       :put   true
-                                      :delte false})
+                                      :delete false})
   :handle-ok (fn [{:keys [self]}]
-               (present-auth-token signer self)))
+               (present-auth-token signer
+                                   self
+                                   (:auth-token-duration config))))
 
 (defn make-target-user-endpoint
   []

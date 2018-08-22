@@ -5,16 +5,20 @@
    [obs.main.middleware :as mnmdw]))
 
 (deftest trailing-slash
-  (testing "ignore trailing slash in `:uri`"
-    (are [response request] (= response
-                               ((mnmdw/-wrap-trailing-slash identity) request))
-      {:uri "/foobar"} {:uri "/foobar"}
-      {:uri "/barfoo"} {:uri "/barfoo/"}
-      {:uri "/bazbar/"} {:uri "/bazbar//"})))
+  (testing "ignore one trailing slash in `:uri`"
+    (let [handler (mnmdw/-wrap-trailing-slash identity)]
+      (testing "do nothing"
+        (= "/foobar" (:uri (handler {:uri "/foobar"}))))
+      (testing "ignored"
+        (= "/foobar" (:uri (handler {:uri "/foobar/"}))))
+      (testing "actually only 1 is being ignored"
+        (= "/foobar///" (:uri (handler {:uri "/foobar////"})))))))
 
 (deftest catching-exception
   (testing "catching exception in handler"
-    (is (= 500 (:status ((mnmdw/-wrap-exception #(/ % 0))
-                         {:status 200}))))
-    (is (= 200 (:status ((mnmdw/-wrap-exception identity)
-                         {:status 200}))))))
+    (testing "handler is throwing an exception"
+      (is (= 500 (:status ((mnmdw/-wrap-exception #(/ % 0))
+                           {:status 200})))))
+    (testing "handler isn't throwing an exception"
+      (is (= 200 (:status ((mnmdw/-wrap-exception identity)
+                           {:status 200})))))))

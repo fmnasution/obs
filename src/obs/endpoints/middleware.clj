@@ -8,14 +8,17 @@
 ;; ================================================================
 
 (defn -inject-context
-  [handler component ks]
+  [handler config component ks]
   (fn [request]
-    (let [context (u/merge component (select-keys request ks))]
+    (let [context (u/merge component
+                           (select-keys request ks)
+                           {:config config})]
       ((handler request) context))))
 
 (defn make-ring-middleware
-  []
+  [config]
   (cptmdw/make-middleware [[-inject-context
+                            config
                             :component
                             [:body-params
                              :route-params

@@ -10,18 +10,22 @@
   (testing "get credentials from authorization headers"
     (let [handler (usrmdw/-wrap-user-credentials identity)
           token   (bdycdc/bytes->str (bdycdc64/encode "foobar:barfoo"))]
-      (is (map? (:user-credentials
-                 (handler
-                  {:headers {"authorization" (str "Basic " token)}
-                   :uri     "/"}))))
-      (is (nil? (:user-credentials (handler {:uri "/"}))))
-      (is (nil? (:user-credentials
-                 (handler {:uri     "/"
-                           :headers {"authorization" "Foobar 123ff"}}))))
-      (is (= {}
-             (:user-credentials
-              (handler {:uri     "/"
-                        :headers {"authorization" "Basic acwegwefew"}})))))))
+      (testing "has the correct header value"
+        (is (map? (:user-credentials
+                   (handler
+                    {:headers {"authorization" (str "Basic " token)}
+                     :uri     "/"})))))
+      (testing "doesn't contain the header"
+        (is (nil? (:user-credentials (handler {:uri "/"})))))
+      (testing "wrong scheme"
+        (is (nil? (:user-credentials
+                   (handler {:uri     "/"
+                             :headers {"authorization" "Foobar 123ff"}})))))
+      (testing "malformed token"
+        (is (= {}
+               (:user-credentials
+                (handler {:uri     "/"
+                          :headers {"authorization" "Basic acwegwefew"}}))))))))
 
 (deftest extracting-forget-claims
   (testing "get forget claims from authorization headers"
@@ -32,14 +36,17 @@
                     :reset-exp 1})
           token   (usrsgn/sign signer {:foo :bar})
           handler (usrmdw/-wrap-forget-password-claims identity signer)]
-      (is (map? (:forget-claims
-                 (handler {:uri     "/"
-                           :headers {"authorization"
-                                     (str "ObsForget " token)}}))))
-      (is (nil? (:forget-claims
-                 (handler {:uri     "/"
-                           :headers {"authorization" "Foobar 123ff"}}))))
-      (is (nil? (:forget-claims (handler {:uri "/"})))))))
+      (testing "has the correct header value"
+        (is (map? (:forget-claims
+                   (handler {:uri     "/"
+                             :headers {"authorization"
+                                       (str "ObsForget " token)}})))))
+      (testing "wrong scheme"
+        (is (nil? (:forget-claims
+                   (handler {:uri     "/"
+                             :headers {"authorization" "Foobar 123ff"}})))))
+      (testing "doesn't contain the header"
+        (is (nil? (:forget-claims (handler {:uri "/"}))))))))
 
 (deftest extracting-reset-claims
   (testing "get reset claims from authorization headers"
@@ -50,11 +57,14 @@
                     :reset-exp 1})
           token (usrsgn/sign signer {:foo :bar})
           handler (usrmdw/-wrap-reset-password-claims identity nil)]
-      (is (map? (:reset-claims
-                 (handler {:uri     "/"
-                           :headers {"authorization"
-                                     (str "ObsReset " token)}}))))
-      (is (nil? (:reset-claims
-                 (handler {:uri     "/"
-                           :headers {"authorization" "Foobar 123ff"}}))))
-      (is (nil? (:reset-claims (handler {:uri "/"})))))))
+      (testing "has the correct header value"
+        (is (map? (:reset-claims
+                   (handler {:uri     "/"
+                             :headers {"authorization"
+                                       (str "ObsReset " token)}})))))
+      (testing "wrong scheme"
+        (is (nil? (:reset-claims
+                   (handler {:uri     "/"
+                             :headers {"authorization" "Foobar 123ff"}})))))
+      (testing "doesn't contain the header"
+        (is (nil? (:reset-claims (handler {:uri "/"}))))))))

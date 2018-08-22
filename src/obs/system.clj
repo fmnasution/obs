@@ -31,10 +31,9 @@
          :web-server (cpthkit/make-web-server (:web-server config))
          :ring-head (cptrng/make-web-request-handler-head)
          :ring-router  (mnrtr/make-ring-router)
-         :ring-middleware (mnmdw/make-ring-middleware
-                           (:ring-middleware config))
+         :ring-middleware (mnmdw/make-ring-middleware (:app config))
          :user-middleware (usrmdw/make-ring-middleware)
-         :endpoint-middleware (edpmdw/make-ring-middleware)
+         :endpoint-middleware (edpmdw/make-ring-middleware (:app config))
          :datomic-blueprint (mndtstdtm/make-datomic-blueprint
                              (:datomic-blueprint config))
          :datastore (mndtst/make-datastore (:datastore config))
@@ -45,7 +44,8 @@
          :create-user-validator (usrvldt/make-create-user-validator)
          :user-credentials-validator (usrvldt/make-user-credentials-validator)
          :forget-claims-validator (usrvldt/make-forget-claims-validator)
-         :reset-claims-validator (usrvldt/make-reset-claims-validator))
+         :reset-claims-validator (usrvldt/make-reset-claims-validator)
+         :update-password-validator (usrvldt/make-update-password-validator))
         (c/system-using
          {:web-server      {:handler :ring-head}
           :ring-head       {:handler    :ring-router
@@ -63,7 +63,8 @@
                                 :create-user-validator
                                 :user-credentials-validator
                                 :forget-claims-validator
-                                :reset-claims-validator]}))))
+                                :reset-claims-validator
+                                :update-password-validator]}))))
 
 (defn dev-system-map
   []

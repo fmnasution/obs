@@ -14,8 +14,7 @@
   (get-by-username [this username])
   (update-password-by-username [this username password])
   (delete-by-username [this username])
-  (create-and-return [this user])
-  (authenticate [this user-credentials]))
+  (create-and-return [this user]))
 
 ;; ================================================================
 ;; implementing protocols
@@ -23,10 +22,11 @@
 
 (defn- datomic->token-ready
   [user]
-  (-> user
-      (select-keys [:db.entity/id :user/username])
-      (set/rename-keys {:db.entity/id  :id
-                        :user/username :username})))
+  (some-> user
+          (select-keys [:db.entity/id :user/username :user/password])
+          (set/rename-keys {:db.entity/id  :id
+                            :user/username :username
+                            :user/password :password})))
 
 (defn- password-ok?
   [attempt encrypted]
@@ -34,8 +34,9 @@
 
 (extend-protocol IUserAPI
   mur.components.datomic.DatomicConn
-  (get-by-username [{:keys [db]} username]
-    (datomic->token-ready (dtm/entity db [:user/username username])))
+  (get-by-username [{:keys [conn db]} username]
+    (let [db (or db (dtm/db conn))]
+      (datomic->token-ready (dtm/entity db [:user/username username]))))
   (update-password-by-username [{:keys [conn]} username password]
     (let [tx-data [{:db/id         [:user/username username]
                     :user/password (bdyhsh/derive password)}]]
@@ -51,8 +52,10 @@
           {:keys [db-after tempids]}
           @(dtm/transact conn tx-data)]
       (datomic->token-ready
-       (dtm/entity db-after (dtm/resolve-tempid db-after tempids eid)))))
-  (authenticate [{:keys [db]} {:keys [username password]}]
-    (u/when-let [user   (dtm/entity db [:user/username username])
-                 match? (password-ok? password (:user/password user))]
-      (datomic->token-ready user))))
+       (dtm/entity db-after (dtm/resolve-tempid db-after tempids eid))))))
+
+(defn authenticate
+  [datastore {:keys [username password]}]
+  (u/when-let [user   (get-by-username datastore username)
+               match? (password-ok? password (:password user))]
+    user))
