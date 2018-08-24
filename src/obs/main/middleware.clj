@@ -5,7 +5,9 @@
    [ring.middleware.defaults :as mdwdef]
    [ring.middleware.cors :as mdwcrs]
    [muuntaja.middleware :as mdwmtj]
+   [ring.logger :as rglgr]
    [mur.components.middleware :as cptmdw]
+   [mur.components.timbre :as cpttmb]
    [taoensso.encore :as u]))
 
 ;; ================================================================
@@ -39,10 +41,22 @@
                       :access-control-allow-origin  patterns
                       :access-control-allow-methods [:post :put :delete])))
 
+(defn -wrap-logger
+  ([handler {:keys [logger]} option]
+   (rglgr/wrap-with-logger
+    handler
+    (u/merge option
+             {:log-fn (fn [{:keys [level throwable message]}]
+                        (cpttmb/log logger level throwable message))})))
+  ([handler component]
+   (-wrap-logger handler component {})))
+
 (defn make-ring-middleware
   [config]
-  (cptmdw/make-middleware [-wrap-trailing-slash
-                           -wrap-exception
-                           [mdwdef/wrap-defaults mdwdef/api-defaults]
-                           mdwmtj/wrap-format-request
-                           [-wrap-cors config]]))
+  (cptmdw/make-middleware
+   [-wrap-trailing-slash
+    -wrap-exception
+    [mdwdef/wrap-defaults mdwdef/api-defaults]
+    mdwmtj/wrap-format-request
+    [-wrap-cors config]
+    [-wrap-logger :component]]))

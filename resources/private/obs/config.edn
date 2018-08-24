@@ -4,6 +4,8 @@
  :signer            #profile {:dev {:kind   :sha
                                     :size   521
                                     :secret "mysecretword"}}
+ :logger            #profile {:dev {:kind  :println
+                                    :level :info}}
  :app               #profile {:dev {:allowed-origins      ["^*"]
                                     :auth-token-duration  1
                                     :reset-token-duration 1}}}

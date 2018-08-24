@@ -10,6 +10,7 @@
    [obs.main.middleware :as mnmdw]
    [obs.main.datastore.datomic :as mndtstdtm]
    [obs.main.datastore :as mndtst]
+   [obs.main.logger :as mnlgr]
    [obs.user.middleware :as usrmdw]
    [obs.user.signer :as usrsgn]
    [obs.user.endpoints :as usredp]
@@ -30,7 +31,7 @@
     (-> (c/system-map
          :web-server (cpthkit/make-web-server (:web-server config))
          :ring-head (cptrng/make-web-request-handler-head)
-         :ring-router  (mnrtr/make-ring-router)
+         :ring-router (mnrtr/make-ring-router)
          :ring-middleware (mnmdw/make-ring-middleware (:app config))
          :user-middleware (usrmdw/make-ring-middleware)
          :endpoint-middleware (edpmdw/make-ring-middleware (:app config))
@@ -38,6 +39,7 @@
                              (:datomic-blueprint config))
          :datastore (mndtst/make-datastore (:datastore config))
          :signer (usrsgn/make-signer (:signer config))
+         :logger (mnlgr/make-logger (:logger config))
          :create-user-endpoint (usredp/make-create-user-endpoint)
          :reset-token-endpoint (usredp/make-reset-token-endpoint)
          :target-user-endpoint (usredp/make-target-user-endpoint)
@@ -57,9 +59,11 @@
          {:ring-router         [:create-user-endpoint
                                 :reset-token-endpoint
                                 :target-user-endpoint]
+          :ring-middleware     [:logger]
           :user-middleware     [:signer]
           :endpoint-middleware [:datastore
                                 :signer
+                                :logger
                                 :create-user-validator
                                 :user-credentials-validator
                                 :forget-claims-validator

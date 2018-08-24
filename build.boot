@@ -16,11 +16,13 @@
                  [buddy/buddy-hashers "1.3.0"]
                  [buddy/buddy-sign "3.0.0"]
                  [clj-time "0.14.4"]
+                 [ring-logger "1.0.1"]
                  ;; ---- cljc ----
                  [com.stuartsierra/component "0.3.2"]
                  [bidi "2.1.3"]
-                 [mur "0.1.3-SNAPSHOT"]
+                 [mur "0.1.4-SNAPSHOT"]
                  [bouncer "1.0.1"]
+                 [com.taoensso/timbre "4.10.0"]
                  [com.taoensso/encore "2.97.0"]
                  ;; ---- dev ----
                  [metosin/bat-test "0.4.0" :scope "test"]])
