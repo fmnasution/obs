@@ -40,8 +40,10 @@
          :datomic-blueprint (mndtstdtm/make-datomic-blueprint
                              (:datomic-blueprint config))
          :datastore (mndtst/make-datastore (:datastore config))
-         :main-datomic-conformer (mnbtst/make-main-datomic-conformer)
-         :user-datomic-conformer (usrbtst/make-user-datomic-conformer)
+         :main-datastore-bootstrapper (mnbtst/make-datastore-bootstrapper
+                                       (:datastore config))
+         :user-datastore-bootstrapper (usrbtst/make-datastore-bootstrapper
+                                       (:datastore config))
          :signer (usrsgn/make-signer (:signer config))
          :logger (mnlgr/make-logger (:logger config))
          :create-user-endpoint (usredp/make-create-user-endpoint)
@@ -53,14 +55,14 @@
          :reset-claims-validator (usrvldt/make-reset-claims-validator)
          :update-password-validator (usrvldt/make-update-password-validator))
         (c/system-using
-         {:web-server             {:handler :ring-head}
-          :ring-head              {:handler    :ring-router
-                                   :middleware :ring-middleware}
-          :ring-middleware        {:middleware :user-middleware}
-          :user-middleware        {:middleware :endpoint-middleware}
-          :datastore              {:datomic-db :datomic-blueprint}
-          :main-datomic-conformer {:datomic-conn :datastore}
-          :user-datomic-conformer {:datomic-conn :datastore}})
+         {:web-server                  {:handler :ring-head}
+          :ring-head                   {:handler    :ring-router
+                                        :middleware :ring-middleware}
+          :ring-middleware             {:middleware :user-middleware}
+          :user-middleware             {:middleware :endpoint-middleware}
+          :datastore                   {:datomic-db :datomic-blueprint}
+          :main-datastore-bootstrapper {:datomic-conn :datastore}
+          :user-datastore-bootstrapper {:datomic-conn :datastore}})
         (c/system-using
          {:ring-router         [:create-user-endpoint
                                 :reset-token-endpoint

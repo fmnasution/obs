@@ -2,7 +2,7 @@
   (:require
    [taoensso.encore :as u]))
 
-(defn apply-context
+(defn context-adapter
   [context-handler]
   (fn [{:keys [route-params] :as request}]
     (fn [context & more-context]

@@ -68,7 +68,7 @@
 (defn make-create-user-endpoint
   []
   (cptbd/make-ring-endpoint
-   ["/user" (edpadpt/apply-context create-user-endpoint)]))
+   ["/user" (edpadpt/context-adapter create-user-endpoint)]))
 
 ;; ================================================================
 ;; reset token
@@ -100,7 +100,7 @@
   []
   (cptbd/make-ring-endpoint
    [["/user/" :username "/reset"]
-    (edpadpt/apply-context reset-token-endpoint)]))
+    (edpadpt/context-adapter reset-token-endpoint)]))
 
 ;; ================================================================
 ;; target user
@@ -175,4 +175,4 @@
 (defn make-target-user-endpoint
   []
   (cptbd/make-ring-endpoint [["/user/" :username]
-                             (edpadpt/apply-context target-user-endpoint)]))
+                             (edpadpt/context-adapter target-user-endpoint)]))

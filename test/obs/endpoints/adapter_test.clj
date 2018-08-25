@@ -14,7 +14,7 @@
               :uri             "/"
               :context         {:a :b}
               :another-context {:c :d}}
-             (((edpapt/apply-context handler)
+             (((edpapt/context-adapter handler)
                {:request-method :get
                 :uri            "/"})
               {:a :b}

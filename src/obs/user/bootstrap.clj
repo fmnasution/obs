@@ -1,9 +1,11 @@
 (ns obs.user.bootstrap
   (:require
+   [clojure.spec.alpha :as s]
    [datomic.api :as dtm]
    [io.rkn.conformity :as dtmcnf]
    [mur.components.datomic.conformer :as cptdtmcnf]
-   [taoensso.encore :as u]))
+   [taoensso.encore :as u]
+   [obs.main.datastore :as mndtst]))
 
 (defn bootstrap-user-schema
   [conn]
@@ -35,6 +37,11 @@
                     :db.install/_attribute :db.part/db}))]
     [tx-data]))
 
-(defn make-user-datomic-conformer
+(defn make-datomic-conformer
   []
   (cptdtmcnf/make-datomic-conformer "private/obs/user/norm_map.edn"))
+
+(defn make-datastore-bootstrapper
+  [config]
+  (case (:kind (s/assert ::mndtst/config config))
+    :datomic (make-datomic-conformer)))
