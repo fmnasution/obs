@@ -1,17 +1,82 @@
 (ns obs.user.signer
   (:require
+   [clojure.spec.alpha :as s]
    [clj-time.core :as t]
    [com.stuartsierra.component :as c]
    [buddy.core.keys :as bdyks]
    [buddy.sign.jwt :as bdysgnjwt]))
 
 ;; =================================================================
+;; sha signer spec
+;; =================================================================
+
+(s/def ::size
+  pos-int?)
+
+(s/def ::secret
+  (s/nilable string?))
+
+(s/def ::sha-signer-option
+  (s/keys :req-un [::size]
+          :opt-un [::secret]))
+
+;; =================================================================
+;; asymetric signer spec
+;; =================================================================
+
+(s/def ::algorithm
+  #{:es256 :es512 :ps256 :ps512 :rs256 :rs512})
+
+(s/def ::public-key-path
+  string?)
+
+(s/def ::private-key-path
+  string?)
+
+(s/def ::asymetric-signer-option
+  (s/keys :req-un [::algorithm ::public-keypath ::private-key-path]))
+
+;; =================================================================
+;; signer spec
+;; =================================================================
+
+(s/def ::kind
+  #{:sha :asymetric})
+
+(s/def ::signer-option
+  (s/keys :req-un [::kind]))
+
+;; =================================================================
+;; protocols spec
+;; =================================================================
+
+(s/def ::sign-output
+  string?)
+
+(s/def ::unsign-output
+  map?)
+
+;; =================================================================
+;; token spec
+;; =================================================================
+
+(s/def ::id
+  (s/or :string string?
+        :int    pos-int?))
+
+(s/def ::username
+  string?)
+
+(s/def ::token-user
+  (s/keys :req-un [::id ::username]))
+
+;; =================================================================
 ;; protocols
 ;; =================================================================
 
 (defprotocol ISigner
-  (sign [this data])
-  (unsign [this signed-data]))
+  (-sign [this data])
+  (-unsign [this signed-data]))
 
 ;; =================================================================
 ;; sha signer
@@ -23,19 +88,19 @@
     :hs256
     :hs512))
 
-(defrecord SHASigner [size secret auth-exp reset-exp]
+(defrecord SHASigner [size secret]
   ISigner
-  (sign [this data]
+  (-sign [this data]
     (let [alg (sha-kind size)]
       (bdysgnjwt/sign data secret {:alg alg})))
-  (unsign [this signed-data]
+  (-unsign [this signed-data]
     (let [alg (sha-kind size)]
       (bdysgnjwt/unsign signed-data secret {:alg alg}))))
 
 (defn make-sha-signer
   [option]
-  (-> option
-      (select-keys [:size :secret :auth-exp :reset-exp])
+  (-> (s/assert ::sha-signer-option option)
+      (select-keys [:size :secret])
       (map->SHASigner)))
 
 ;; =================================================================
@@ -44,8 +109,6 @@
 
 (defrecord AsymetricSigner [public-key-path
                             private-key-path
-                            auth-exp
-                            reset-exp
                             algorithm
                             public-key
                             private-key]
@@ -62,26 +125,36 @@
       (assoc this :public-key nil :private-key nil)))
 
   ISigner
-  (sign [this data]
+  (-sign [this data]
     (bdysgnjwt/sign data private-key {:alg algorithm}))
-  (unsign [this signed-data]
+  (-unsign [this signed-data]
     (bdysgnjwt/unsign signed-data public-key {:alg algorithm})))
 
 (defn make-asymetric-signer
   [option]
-  (-> option
+  (-> (s/assert ::asymetric-signer-option option)
       (select-keys [:algorithm
                     :private-key-path
-                    :public-key-path
-                    :auth-exp
-                    :reset-exp])
+                    :public-key-path])
       (map->AsymetricSigner)))
 
 (defn make-signer
   [config]
-  (case (:kind config)
+  (case (:kind (s/assert ::signer-option config))
     :sha       (make-sha-signer config)
     :asymetric (make-asymetric-signer config)))
+
+(defn sign
+  [signer data]
+  (->> data
+       (-sign signer)
+       (s/assert ::sign-output)))
+
+(defn unsign
+  [signer signed-data]
+  (->> signed-data
+       (-unsign signer)
+       (s/assert ::unsign-output)))
 
 (defn auth-token
   ([signer user hours-expired]
@@ -89,7 +162,7 @@
          exp (t/plus now (t/hours (if (some? hours-expired)
                                     hours-expired
                                     1)))]
-     (-> user
+     (-> (s/assert ::token-user user)
          (select-keys [:id :username])
          (assoc :iat now :exp exp)
          (as-> <> (sign signer <>)))))
@@ -102,7 +175,7 @@
          exp (t/plus now (t/hours (if (some? hours-expired)
                                     hours-expired
                                     1)))]
-     (-> user
+     (-> (s/assert ::token-user user)
          (select-keys [:id :username])
          (assoc :sub "reset", :iat now, :exp exp)
          (as-> <> (sign signer <>)))))

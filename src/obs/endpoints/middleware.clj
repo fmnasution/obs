@@ -21,7 +21,6 @@
                             config
                             :component
                             [:body-params
-                             :route-params
                              :user-credentials
                              :forget-claims
                              :reset-claims]]]))

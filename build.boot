@@ -7,6 +7,7 @@
                  [http-kit "2.3.0"]
                  [metosin/ring-http-response "0.9.0"]
                  [com.datomic/datomic-free "0.9.5697"]
+                 [io.rkn/conformity "0.5.1"]
                  [ring/ring-defaults "0.3.2"]
                  [metosin/muuntaja "0.5.0"]
                  [ring-cors "0.1.12"]
@@ -20,7 +21,7 @@
                  ;; ---- cljc ----
                  [com.stuartsierra/component "0.3.2"]
                  [bidi "2.1.3"]
-                 [mur "0.1.4-SNAPSHOT"]
+                 [mur "0.1.6-SNAPSHOT"]
                  [bouncer "1.0.1"]
                  [com.taoensso/timbre "4.10.0"]
                  [com.taoensso/encore "2.97.0"]
@@ -40,5 +41,6 @@
    (system :system 'obs.system/dev-system-map
            :files  ["system.clj"
                     "endpoints.clj"
-                    "config.edn"])
+                    "config.edn"
+                    "norm_map.edn"])
    (bat-test)))

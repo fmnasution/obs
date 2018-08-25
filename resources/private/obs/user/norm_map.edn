@@ -1,0 +1,2 @@
+{:obs.user/v1
+ {:txes-fn obs.user.bootstrap/bootstrap-user-schema}}

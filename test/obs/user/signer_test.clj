@@ -58,13 +58,16 @@
 (deftest asymetryc-signer
   (testing "able to sign and unsign claims"
     (let [system (asymetric-signer-system
-                  {:algorithm        :rs256
-                   :private-key-path (io/resource
-                                      "private/obs/key/obstestkey.pem")
-                   :public-key-path  (io/resource
-                                      "private/obs/key/obstestkey_public.pem")
-                   :auth-exp         1
-                   :reset-exp        1})
+                  {:algorithm :rs256
+
+                   :private-key-path
+                   (io/resource "private/obs/user/key/obstestkey.pem")
+
+                   :public-key-path
+                   (io/resource "private/obs/user/key/obstestkey_public.pem")
+
+                   :auth-exp  1
+                   :reset-exp 1})
           {:keys [signer] :as started}
           (c/start system)]
       (testing "signing claims"

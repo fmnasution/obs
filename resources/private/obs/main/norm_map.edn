@@ -1,0 +1,2 @@
+{:obs.main/v1
+ {:txes-fn obs.main.bootstrap/bootstrap-main-schema}}
