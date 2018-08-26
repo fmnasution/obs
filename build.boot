@@ -18,6 +18,7 @@
                  [buddy/buddy-sign "3.0.0"]
                  [clj-time "0.14.4"]
                  [ring-logger "1.0.1"]
+                 [org.clojure/tools.cli "0.3.7"]
                  ;; ---- cljc ----
                  [com.stuartsierra/component "0.3.2"]
                  [bidi "2.1.3"]
@@ -31,16 +32,24 @@
 (require
  '[mur.boot :refer [system]]
  '[metosin.bat-test :refer [bat-test]]
- '[obs.system :refer [dev-system-map]])
+ '[obs.app :refer [make-dev-system-map]])
+
+(deftask dev-system-repl
+  []
+  (comp
+   (repl :server true)
+   (watch)
+   (system :system 'obs.app/make-dev-system-map
+           :files  ["system.clj"
+                    "endpoints.clj"
+                    "config.edn"
+                    "norm_map.edn"])
+   (bat-test)))
 
 (deftask dev-repl
   []
   (comp
    (repl :server true)
    (watch)
-   (system :system 'obs.system/dev-system-map
-           :files  ["system.clj"
-                    "endpoints.clj"
-                    "config.edn"
-                    "norm_map.edn"])
+   (system)
    (bat-test)))
