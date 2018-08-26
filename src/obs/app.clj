@@ -14,7 +14,7 @@
 
 (defn- load-config
   [source profile]
-  (read-config (io/resource source) {:profile profile}))
+  (read-config (io/file source) {:profile profile}))
 
 (defn make-dev-system-map
   []
@@ -33,14 +33,10 @@
         {:keys [target profile]} options]
     (u/cond
       (nil? target)
-      (throw (ex-info
-              "You have to specify path to the aero config"
-              {}))
+      (throw (ex-info "No target specified" {}))
 
       (nil? profile)
-      (throw (ex-info
-              "You have to specify profile to be used in the aero config"
-              {}))
+      (throw (ex-info "No profile specified" {}))
 
       :let [config (load-config target profile)
             system (sys/make-system-map config)

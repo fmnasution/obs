@@ -53,3 +53,12 @@
    (watch)
    (system)
    (bat-test)))
+
+(deftask build
+  []
+  (comp
+   (aot :namespace #{'obs.app})
+   (uber)
+   (jar :file "obs.jar" :main 'obs.app)
+   (sift :include #{#"obs.jar"})
+   (target)))
