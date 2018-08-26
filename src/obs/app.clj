@@ -12,13 +12,11 @@
 ;; apps
 ;; ================================================================
 
-(defn- load-config
-  [source profile]
-  (read-config (io/file source) {:profile profile}))
-
 (defn make-dev-system-map
   []
-  (sys/make-system-map (load-config "private/obs/config.edn" :dev)))
+  (sys/make-system-map (read-config
+                        (io/resource "private/obs/config.edn")
+                        {:profile :dev})))
 
 (def ^:private cli-spec
   [["-t" "--target TARGET" "Target path of the aero config"]
@@ -38,7 +36,7 @@
       (nil? profile)
       (throw (ex-info "No profile specified" {}))
 
-      :let [config (load-config target profile)
+      :let [config (read-config (io/file target) {:profile profile})
             system (sys/make-system-map config)
             port   (get-in config [:web-server :port])]
 
