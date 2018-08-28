@@ -27,12 +27,30 @@
                  [com.taoensso/timbre "4.10.0"]
                  [com.taoensso/encore "2.97.0"]
                  ;; ---- dev ----
-                 [metosin/bat-test "0.4.0" :scope "test"]])
+                 [metosin/bat-test "0.4.0" :scope "test"]
+                 [adzerk/bootlaces "0.1.13" :scope "test"]])
 
 (require
  '[mur.boot :refer [system]]
  '[metosin.bat-test :refer [bat-test]]
- '[obs.app :refer [make-dev-system-map]])
+ '[obs.app :refer [make-dev-system-map]]
+ '[adzerk.bootlaces :refer [bootlaces! build-jar push-snapshot push-release]])
+
+(def +version+
+  "0.1.0-SNAPSHOT")
+
+(bootlaces! +version+)
+
+(task-options!
+ push {:ensure-branch nil
+       :repo-map      {:checksum :warn}}
+ pom  {:project     'obs
+       :version     +version+
+       :description "An HTTP authentication server"
+       :url         "http://github.com/fmnasution/obs"
+       :scm         {:url "http://github.com/fmnasution/obs"}
+       :license     {"Eclipse Public License"
+                     "http://www.eclipse.org/legal/epl-v10.html"}})
 
 (deftask dev-system-repl
   []
@@ -59,6 +77,12 @@
   (comp
    (aot :namespace #{'obs.app})
    (uber)
-   (jar :file "obs.jar" :main 'obs.app)
+   (jar :file (str "obs-" +version+) :main 'obs.app)
    (sift :include #{#"obs.jar"})
    (target)))
+
+(deftask snapshot-to-clojars
+  []
+  (comp
+   (build-jar)
+   (push-snapshot)))
