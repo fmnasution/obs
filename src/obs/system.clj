@@ -1,9 +1,8 @@
 (ns obs.system
   (:require
    [com.stuartsierra.component :as c]
-   [mur.components.http-kit :as cpthkit]
-   [mur.components.ring :as cptrng]
    [io.clojure.liberator-transit]
+   [obs.main.web :as mnwb]
    [obs.main.router :as mnrtr]
    [obs.main.middleware :as mnmdw]
    [obs.main.datastore.datomic :as mndtstdtm]
@@ -14,8 +13,7 @@
    [obs.user.signer :as usrsgn]
    [obs.user.endpoints :as usredp]
    [obs.user.validator :as usrvldt]
-   [obs.user.bootstrap :as usrbtst]
-   [obs.endpoints.middleware :as edpmdw]))
+   [obs.user.bootstrap :as usrbtst]))
 
 ;; ================================================================
 ;; system
@@ -24,12 +22,12 @@
 (defn make-system-map
   [config]
   (-> (c/system-map
-       :web-server (cpthkit/make-web-server (:web-server config))
-       :ring-head (cptrng/make-web-request-handler-head)
+       :web-server (mnwb/make-web-server (:web-server config))
+       :ring-head (mnrtr/make-ring-head)
+       :route-collector (mnrtr/make-route-collector)
        :ring-router (mnrtr/make-ring-router)
        :ring-middleware (mnmdw/make-ring-middleware (:app config))
        :user-middleware (usrmdw/make-ring-middleware)
-       :endpoint-middleware (edpmdw/make-ring-middleware (:app config))
        :datomic-blueprint (mndtstdtm/make-datomic-blueprint
                            (:datomic-blueprint config))
        :datastore (mndtst/make-datastore (:datastore config))
@@ -48,25 +46,24 @@
        :reset-claims-validator (usrvldt/make-reset-claims-validator)
        :update-password-validator (usrvldt/make-update-password-validator))
       (c/system-using
-       {:web-server                  {:handler :ring-head}
-        :ring-head                   {:handler    :ring-router
-                                      :middleware :ring-middleware}
-        :ring-middleware             {:middleware :user-middleware}
-        :user-middleware             {:middleware :endpoint-middleware}
+       {:web-server                  {:ring-handler :ring-head}
+        :ring-head                   {:ring-handler :ring-router}
+        :ring-middleware             {:ring-middleware :user-middleware}
         :datastore                   {:datomic-db :datomic-blueprint}
         :main-datastore-bootstrapper {:datomic-conn :datastore}
         :user-datastore-bootstrapper {:datomic-conn :datastore}})
       (c/system-using
-       {:ring-router         [:create-user-endpoint
-                              :reset-token-endpoint
-                              :target-user-endpoint]
-        :ring-middleware     [:logger]
-        :user-middleware     [:signer]
-        :endpoint-middleware [:datastore
-                              :signer
-                              :logger
-                              :create-user-validator
-                              :user-credentials-validator
-                              :forget-claims-validator
-                              :reset-claims-validator
-                              :update-password-validator]})))
+       {:ring-head       [:ring-middleware]
+        :route-collector [:create-user-endpoint
+                          :reset-token-endpoint
+                          :target-user-endpoint]
+        :ring-router     [:datastore
+                          :signer
+                          :logger
+                          :create-user-validator
+                          :user-credentials-validator
+                          :forget-claims-validator
+                          :reset-claims-validator
+                          :update-password-validator]
+        :ring-middleware [:logger]
+        :user-middleware [:signer]})))

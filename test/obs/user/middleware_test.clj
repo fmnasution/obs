@@ -55,7 +55,7 @@
                     :secret    "abcdefghijklmnopqrstuvwxyz"
                     :auth-exp  1
                     :reset-exp 1})
-          token (usrsgn/sign signer {:foo :bar})
+          token   (usrsgn/sign signer {:foo :bar})
           handler (usrmdw/-wrap-reset-password-claims identity nil)]
       (testing "has the correct header value"
         (is (map? (:reset-claims

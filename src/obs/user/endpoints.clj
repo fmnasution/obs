@@ -4,7 +4,6 @@
    [liberator.core :as l :refer [defresource]]
    [liberator.representation :as lrep]
    [mur.components.bidi :as cptbd]
-   [obs.endpoints.adapter :as edpadpt]
    [obs.endpoints.decisions :as edpdcs]
    [obs.validator.validator :as vldtvldt]
    [obs.user.api :as usrapi]
@@ -67,8 +66,7 @@
 
 (defn make-create-user-endpoint
   []
-  (cptbd/make-ring-endpoint
-   ["/user" (edpadpt/context-adapter create-user-endpoint)]))
+  (cptbd/make-ring-endpoint ["/user" create-user-endpoint]))
 
 ;; ================================================================
 ;; reset token
@@ -99,8 +97,7 @@
 (defn make-reset-token-endpoint
   []
   (cptbd/make-ring-endpoint
-   [["/user/" :username "/reset"]
-    (edpadpt/context-adapter reset-token-endpoint)]))
+   [["/user/" :username "/reset"] reset-token-endpoint]))
 
 ;; ================================================================
 ;; target user
@@ -174,5 +171,4 @@
 
 (defn make-target-user-endpoint
   []
-  (cptbd/make-ring-endpoint [["/user/" :username]
-                             (edpadpt/context-adapter target-user-endpoint)]))
+  (cptbd/make-ring-endpoint [["/user/" :username] target-user-endpoint]))

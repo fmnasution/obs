@@ -2,7 +2,7 @@
   (:require
    [clojure.string :as str]
    [bouncer.validators :as bncv :refer [defvalidator]]
-   [obs.validator.validator :as vldtvldt]))
+   [mur.components.validators :as cptvldt]))
 
 ;; =================================================================
 ;; predicate
@@ -28,7 +28,7 @@
 
 (defn make-create-user-validator
   []
-  (vldtvldt/make-validator (create-user-schema)))
+  (cptvldt/make-validator (create-user-schema)))
 
 ;; ================================================================
 ;; user credentials validator
@@ -43,7 +43,7 @@
 
 (defn make-user-credentials-validator
   []
-  (vldtvldt/make-validator (user-credentials-schema)))
+  (cptvldt/make-validator (user-credentials-schema)))
 
 ;; ================================================================
 ;; forget claims validator
@@ -56,7 +56,7 @@
 
 (defn make-forget-claims-validator
   []
-  (vldtvldt/make-validator (forget-claims-schema)))
+  (cptvldt/make-validator (forget-claims-schema)))
 
 ;; ================================================================
 ;; reset claims validator
@@ -71,7 +71,7 @@
 
 (defn make-reset-claims-validator
   []
-  (vldtvldt/make-validator (reset-claims-schema)))
+  (cptvldt/make-validator (reset-claims-schema)))
 
 ;; ================================================================
 ;; update password validator
@@ -84,4 +84,4 @@
 
 (defn make-update-password-validator
   []
-  (vldtvldt/make-validator (update-password-schema)))
+  (cptvldt/make-validator (update-password-schema)))

@@ -22,7 +22,7 @@
                  ;; ---- cljc ----
                  [com.stuartsierra/component "0.3.2"]
                  [bidi "2.1.3"]
-                 [mur "0.1.6-SNAPSHOT"]
+                 [mur "0.1.9-SNAPSHOT"]
                  [bouncer "1.0.1"]
                  [com.taoensso/timbre "4.10.0"]
                  [com.taoensso/encore "2.97.0"]
