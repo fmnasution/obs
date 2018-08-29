@@ -8,12 +8,10 @@
    [obs.main.datastore.datomic :as mndtstdtm]
    [obs.main.datastore :as mndtst]
    [obs.main.logger :as mnlgr]
-   [obs.main.bootstrap :as mnbtst]
    [obs.user.middleware :as usrmdw]
    [obs.user.signer :as usrsgn]
    [obs.user.endpoints :as usredp]
-   [obs.user.validator :as usrvldt]
-   [obs.user.bootstrap :as usrbtst]))
+   [obs.user.validator :as usrvldt]))
 
 ;; ================================================================
 ;; system
@@ -31,10 +29,6 @@
        :datomic-blueprint (mndtstdtm/make-datomic-blueprint
                            (:datomic-blueprint config))
        :datastore (mndtst/make-datastore (:datastore config))
-       :main-datastore-bootstrapper (mnbtst/make-datastore-bootstrapper
-                                     (:datastore config))
-       :user-datastore-bootstrapper (usrbtst/make-datastore-bootstrapper
-                                     (:datastore config))
        :signer (usrsgn/make-signer (:signer config))
        :logger (mnlgr/make-logger (:logger config))
        :create-user-endpoint (usredp/make-create-user-endpoint)
@@ -46,12 +40,10 @@
        :reset-claims-validator (usrvldt/make-reset-claims-validator)
        :update-password-validator (usrvldt/make-update-password-validator))
       (c/system-using
-       {:web-server                  {:ring-handler :ring-head}
-        :ring-head                   {:ring-handler :ring-router}
-        :ring-middleware             {:ring-middleware :user-middleware}
-        :datastore                   {:datomic-db :datomic-blueprint}
-        :main-datastore-bootstrapper {:datomic-conn :datastore}
-        :user-datastore-bootstrapper {:datomic-conn :datastore}})
+       {:web-server      {:ring-handler :ring-head}
+        :ring-head       {:ring-handler :ring-router}
+        :ring-middleware {:middleware :user-middleware}
+        :datastore       {:datomic-db :datomic-blueprint}})
       (c/system-using
        {:ring-head       [:ring-middleware]
         :route-collector [:create-user-endpoint

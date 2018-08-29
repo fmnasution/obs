@@ -24,6 +24,6 @@
                 "text/plain"))
    [:body-params
     :route-params
-    :identity
+    :user-credentials
     :forget-claims
     :reset-claims]))

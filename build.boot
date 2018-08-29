@@ -33,8 +33,11 @@
 (require
  '[mur.boot :refer [system]]
  '[metosin.bat-test :refer [bat-test]]
- '[obs.app :refer [make-dev-system-map]]
+ ;; '[obs.app :refer [make-dev-system-map]]
  '[adzerk.bootlaces :refer [bootlaces! build-jar push-snapshot push-release]])
+
+(def +project-name+
+  'obs)
 
 (def +version+
   "0.1.0-SNAPSHOT")
@@ -44,7 +47,7 @@
 (task-options!
  push {:ensure-branch nil
        :repo-map      {:checksum :warn}}
- pom  {:project     'obs
+ pom  {:project     +project-name+
        :version     +version+
        :description "An HTTP authentication server"
        :url         "http://github.com/fmnasution/obs"
@@ -54,18 +57,23 @@
 
 (deftask dev-system-repl
   []
+  (merge-env!
+   :source-paths #{"env/dev/"})
+  (require 'obs.app)
   (comp
    (repl :server true)
    (watch)
    (system :system 'obs.app/make-dev-system-map
-           :files  ["system.clj"
-                    "endpoints.clj"
+           :files  ["app.clj"
+                    "system.clj"
                     "config.edn"
                     "norm_map.edn"])
    (bat-test)))
 
 (deftask dev-repl
   []
+  (merge-env!
+   :source-paths #{"env/dev/"})
   (comp
    (repl :server true)
    (watch)
@@ -74,10 +82,13 @@
 
 (deftask build
   []
+  (merge-env!
+   :source-paths #{"env/prod/"})
+  (require 'obs.app)
   (comp
    (aot :namespace #{'obs.app})
    (uber)
-   (jar :file (str "obs-" +version+) :main 'obs.app)
+   (jar :file (str +project-name+ "-" +version+) :main 'obs.app)
    (sift :include #{#"obs.jar"})
    (target)))
 

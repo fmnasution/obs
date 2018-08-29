@@ -1,9 +1,9 @@
 (ns obs.test.mock
   (:require
    [buddy.hashers :as bdyhsh]
+   [mur.components.bouncer :as cptbnc]
    [obs.user.signer :as usrsgn]
-   [obs.user.api :as usrapi]
-   [obs.validator.validator :as vldtvldt]))
+   [obs.user.api :as usrapi]))
 
 ;; ================================================================
 ;; mock datastore
@@ -59,8 +59,8 @@
 
 (defn make-mock-validator
   [success?]
-  (reify vldtvldt/IValidator
-    (-valid? [_ data]
+  (reify cptbnc/IValidator
+    (valid? [_ data]
       success?)
-    (-validate [_ data]
+    (validate [_ data]
       [(if success? {} {:error? true}) data])))

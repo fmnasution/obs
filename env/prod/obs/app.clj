@@ -9,14 +9,8 @@
   (:gen-class))
 
 ;; ================================================================
-;; apps
+;; app
 ;; ================================================================
-
-(defn make-dev-system-map
-  []
-  (sys/make-system-map (read-config
-                        (io/resource "private/obs/config.edn")
-                        {:profile :dev})))
 
 (def ^:private cli-spec
   [["-t" "--target TARGET" "Target path of the aero config"]

@@ -4,8 +4,8 @@
    [liberator.core :as l :refer [defresource]]
    [liberator.representation :as lrep]
    [mur.components.bidi :as cptbd]
+   [mur.components.bouncer :as cptbnc]
    [obs.endpoints.decisions :as edpdcs]
-   [obs.validator.validator :as vldtvldt]
    [obs.user.api :as usrapi]
    [obs.user.signer :as usrsgn]))
 
@@ -55,7 +55,7 @@
   :malformed? edpdcs/no-content-type?
   :known-content-type? #(edpdcs/supported-content-type? % supported-media-types)
   :processable? (fn [_]
-                  (vldtvldt/valid? create-user-validator body-params))
+                  (cptbnc/valid? create-user-validator body-params))
   :conflict? (fn [_]
                (some? (get-by-username datastore body-params)))
   :post! (fn [_]
@@ -82,7 +82,7 @@
   :available-media-types supported-media-types
   :allowed-methods [:post]
   :malformed? (fn [_]
-                (vldtvldt/invalid? forget-claims-validator forget-claims))
+                (not (cptbnc/valid? forget-claims-validator forget-claims)))
   :conflict? (fn [_]
                (not (equal-username? route-params forget-claims)))
   :new? false
@@ -117,18 +117,18 @@
   :available-media-types supported-media-types
   :allowed-methods [:post :put :delete]
   :malformed? (let [invalid-user-credentials?
-                    #(vldtvldt/invalid? user-credentials-validator
-                                        user-credentials)]
+                    #(not (cptbnc/valid? user-credentials-validator
+                                         user-credentials))]
                 (l/by-method
                  {:post   (fn [_]
                             (invalid-user-credentials?))
                   :put    (fn [ctx]
                             (or (edpdcs/no-content-type? ctx)
-                                (vldtvldt/invalid? update-password-validator
-                                                   body-params)
+                                (not (cptbnc/valid? update-password-validator
+                                                    body-params))
                                 (if (some? reset-claims)
-                                  (vldtvldt/invalid? reset-claims-validator
-                                                     reset-claims)
+                                  (not (cptbnc/valid? reset-claims-validator
+                                                      reset-claims))
                                   (invalid-user-credentials?))))
                   :delete (fn [_]
                             (invalid-user-credentials?))}))
@@ -161,8 +161,8 @@
                                                  body-params)})
   :delete! (fn [_]
              {::result (delete-by-username datastore route-params)})
-  :respond-with-entity? (l/by-method {:post  true
-                                      :put   true
+  :respond-with-entity? (l/by-method {:post   true
+                                      :put    true
                                       :delete false})
   :handle-ok (fn [{:keys [self]}]
                (present-auth-token signer
